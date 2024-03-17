@@ -100,8 +100,8 @@ def refined_training(args):
     train_num_images_per_batch = 1  # 1 for full images
 
     # Loss functions
-    loss_function = 'l1+dssim'  # 'l1' or 'l2' or 'l1+dssim'
-    if loss_function == 'l1+dssim':
+    loss_function = "l1+dssim"  # "l1" or "l2" or "l1+dssim"
+    if loss_function == "l1+dssim":
         dssim_factor = 0.2
 
     # Regularization
@@ -113,7 +113,7 @@ def refined_training(args):
             
     regularize_sdf = False
     if regularize_sdf:
-        beta_mode = 'average'  # 'learnable', 'average' or 'weighted_average'
+        beta_mode = "average"  # "learnable", "average" or "weighted_average"
         
         start_sdf_regularization_from = 9000
         regularize_sdf_only_for_gaussians_with_high_opacity = False
@@ -123,7 +123,7 @@ def refined_training(args):
         use_sdf_estimation_loss = True
         enforce_samples_to_be_on_surface = False
         if use_sdf_estimation_loss or enforce_samples_to_be_on_surface:
-            sdf_estimation_mode = 'sdf'  # 'sdf' or 'density'
+            sdf_estimation_mode = "sdf"  # "sdf" or "density"
             sdf_estimation_factor = 0.2  # 0.1 or 0.2?
             samples_on_surface_factor = 0.2  # 0.05
             
@@ -146,7 +146,7 @@ def refined_training(args):
             sdf_better_normal_gradient_through_normal_only = True
         
         density_factor = 1. / 16. # 1. / 16.
-        if (use_sdf_estimation_loss or enforce_samples_to_be_on_surface) and sdf_estimation_mode == 'density':
+        if (use_sdf_estimation_loss or enforce_samples_to_be_on_surface) and sdf_estimation_mode == "density":
             density_factor = 1.
         density_threshold = 1.  # 0.5 * density_factor
         n_samples_for_sdf_regularization = 1_000_000  # 300_000
@@ -229,10 +229,10 @@ def refined_training(args):
     # ====================End of parameters====================
 
     if args.output_dir is None:
-        if len(args.scene_path.split("/")[-1]) > 0:
-            args.output_dir = os.path.join("./output/refined", args.scene_path.split("/")[-1])
+        if len(args.scene_path.split(os.sep)[-1]) > 0:
+            args.output_dir = os.path.join("output", "refined", args.scene_path.split(os.sep)[-1])
         else:
-            args.output_dir = os.path.join("./output/refined", args.scene_path.split("/")[-2])
+            args.output_dir = os.path.join("output", "refined", args.scene_path.split(os.sep)[-2])
             
     # Bounding box
     if args.bboxmin is None:
@@ -243,23 +243,23 @@ def refined_training(args):
         use_custom_bbox = True
         
         # Parse bboxmin
-        if args.bboxmin[0] == '(':
+        if args.bboxmin[0] == "(":
             args.bboxmin = args.bboxmin[1:]
-        if args.bboxmin[-1] == ')':
+        if args.bboxmin[-1] == ")":
             args.bboxmin = args.bboxmin[:-1]
         args.bboxmin = tuple([float(x) for x in args.bboxmin.split(",")])
         
         # Parse bboxmax
-        if args.bboxmax[0] == '(':
+        if args.bboxmax[0] == "(":
             args.bboxmax = args.bboxmax[1:]
-        if args.bboxmax[-1] == ')':
+        if args.bboxmax[-1] == ")":
             args.bboxmax = args.bboxmax[:-1]
         args.bboxmax = tuple([float(x) for x in args.bboxmax.split(",")])
             
     source_path = args.scene_path
     gs_checkpoint_path = args.checkpoint_path
     surface_mesh_to_bind_path = args.mesh_path
-    mesh_name = surface_mesh_to_bind_path.split("/")[-1].split(".")[0]
+    mesh_name = surface_mesh_to_bind_path.split(os.sep)[-1].split(".")[0]
     iteration_to_load = args.iteration_to_load    
     
     surface_mesh_normal_consistency_factor = args.normal_consistency_factor    
@@ -271,12 +271,12 @@ def refined_training(args):
     n_vertices_in_fg = args.n_vertices_in_fg
     num_iterations = args.refinement_iterations
     
-    sugar_checkpoint_path = 'sugarfine_' + mesh_name.replace('sugarmesh_', '') + '_normalconsistencyXX_gaussperfaceYY/'
+    sugar_checkpoint_path = "sugarfine_" + mesh_name.replace("sugarmesh_", "") + "_normalconsistencyXX_gaussperfaceYY"
     sugar_checkpoint_path = os.path.join(args.output_dir, sugar_checkpoint_path)
     sugar_checkpoint_path = sugar_checkpoint_path.replace(
-        'XX', str(surface_mesh_normal_consistency_factor).replace('.', '')
+        "XX", str(surface_mesh_normal_consistency_factor).replace(".", "")
         ).replace(
-        'YY', str(n_gaussians_per_surface_triangle).replace('.', '')
+        "YY", str(n_gaussians_per_surface_triangle).replace(".", "")
         )
         
     if use_custom_bbox:
@@ -287,7 +287,7 @@ def refined_training(args):
     
     export_ply_at_the_end = args.export_ply
     
-    ply_path = os.path.join(source_path, "sparse/0/points3D.ply")
+    ply_path = os.path.join(source_path, "sparse", "0", "points3D.ply")
     
     CONSOLE.print("-----Parsed parameters-----")
     CONSOLE.print("Source path:", source_path)
@@ -310,7 +310,7 @@ def refined_training(args):
     # Setup device
     torch.cuda.set_device(num_device)
     CONSOLE.print("Using device:", num_device)
-    device = torch.device(f'cuda:{num_device}')
+    device = torch.device(f"cuda:{num_device}")
     CONSOLE.print(torch.cuda.memory_summary())
     
     torch.autograd.set_detect_anomaly(detect_anomaly)
@@ -333,14 +333,14 @@ def refined_training(args):
         eval_split_interval=n_skip_images_for_eval_split,
         )
 
-    CONSOLE.print(f'{len(nerfmodel.training_cameras)} training images detected.')
-    CONSOLE.print(f'The model has been trained for {iteration_to_load} steps.')
+    CONSOLE.print(f"{len(nerfmodel.training_cameras)} training images detected.")
+    CONSOLE.print(f"The model has been trained for {iteration_to_load} steps.")
 
     if downscale_resolution_factor != 1:
        nerfmodel.downscale_output_resolution(downscale_resolution_factor)
-    CONSOLE.print(f'\nCamera resolution scaled to '
-          f'{nerfmodel.training_cameras.gs_cameras[0].image_height} x '
-          f'{nerfmodel.training_cameras.gs_cameras[0].image_width}'
+    CONSOLE.print(f"\nCamera resolution scaled to "
+          f"{nerfmodel.training_cameras.gs_cameras[0].image_height} x "
+          f"{nerfmodel.training_cameras.gs_cameras[0].image_width}"
           )
 
     # Point cloud
@@ -376,9 +376,9 @@ def refined_training(args):
     
     # Mesh to bind to if needed  TODO
     if bind_to_surface_mesh:
-        # surface_mesh_to_bind_full_path = os.path.join('./results/meshes/', surface_mesh_to_bind_path)
+        # surface_mesh_to_bind_full_path = os.path.join("results", "meshes", surface_mesh_to_bind_path)
         surface_mesh_to_bind_full_path = surface_mesh_to_bind_path
-        CONSOLE.print(f'\nLoading mesh to bind to: {surface_mesh_to_bind_full_path}...')
+        CONSOLE.print(f"\nLoading mesh to bind to: {surface_mesh_to_bind_full_path}...")
         o3d_mesh = o3d.io.read_triangle_mesh(surface_mesh_to_bind_full_path)
         CONSOLE.print("Mesh to bind to loaded.")
     else:
@@ -429,10 +429,10 @@ def refined_training(args):
                 sugar._sh_coordinates_dc[...] = nerfmodel.gaussians._features_dc.detach()
                 sugar._sh_coordinates_rest[...] = nerfmodel.gaussians._features_rest.detach()
         
-    CONSOLE.print(f'\nSuGaR model has been initialized.')
+    CONSOLE.print(f"\nSuGaR model has been initialized.")
     CONSOLE.print(sugar)
-    CONSOLE.print(f'Number of parameters: {sum(p.numel() for p in sugar.parameters() if p.requires_grad)}')
-    CONSOLE.print(f'Checkpoints will be saved in {sugar_checkpoint_path}')
+    CONSOLE.print(f"Number of parameters: {sum(p.numel() for p in sugar.parameters() if p.requires_grad)}")
+    CONSOLE.print(f"Checkpoints will be saved in {sugar_checkpoint_path}")
     
     CONSOLE.print("\nModel parameters:")
     for name, param in sugar.named_parameters():
@@ -470,7 +470,7 @@ def refined_training(args):
     
     CONSOLE.print("Optimizable parameters:")
     for param_group in optimizer.optimizer.param_groups:
-        CONSOLE.print(param_group['name'], param_group['lr'])
+        CONSOLE.print(param_group["name"], param_group["lr"])
         
         
     # ====================Initialize densifier====================
@@ -488,14 +488,14 @@ def refined_training(args):
         
     
     # ====================Loss function====================
-    if loss_function == 'l1':
+    if loss_function == "l1":
         loss_fn = l1_loss
-    elif loss_function == 'l2':
+    elif loss_function == "l2":
         loss_fn = l2_loss
-    elif loss_function == 'l1+dssim':
+    elif loss_function == "l1+dssim":
         def loss_fn(pred_rgb, gt_rgb):
             return (1.0 - dssim_factor) * l1_loss(pred_rgb, gt_rgb) + dssim_factor * (1.0 - ssim(pred_rgb, gt_rgb))
-    CONSOLE.print(f'Using loss function: {loss_function}')
+    CONSOLE.print(f"Using loss function: {loss_function}")
     
     
     # ====================Start training====================
@@ -532,7 +532,7 @@ def refined_training(args):
                 CONSOLE.print("\nPruning gaussians with low-opacity for further optimization...")
                 prune_mask = (gaussian_densifier.model.strengths < prune_hard_opacity_threshold).squeeze()
                 gaussian_densifier.prune_points(prune_mask)
-                CONSOLE.print(f'Pruning finished: {sugar.n_points} gaussians left.')
+                CONSOLE.print(f"Pruning finished: {sugar.n_points} gaussians left.")
                 if regularize and iteration >= start_reset_neighbors_from:
                     sugar.reset_neighbors()
             
@@ -557,15 +557,15 @@ def refined_training(args):
                     return_opacities=enforce_entropy_regularization,
                     )
                 if use_densifier or regularize or enforce_entropy_regularization:
-                    pred_rgb = outputs['image'].view(-1, 
+                    pred_rgb = outputs["image"].view(-1, 
                         sugar.image_height, 
                         sugar.image_width, 
                         3)
                     if use_densifier or regularize:
-                        radii = outputs['radii']
-                        viewspace_points = outputs['viewspace_points']
+                        radii = outputs["radii"]
+                        viewspace_points = outputs["viewspace_points"]
                     if enforce_entropy_regularization:
-                        opacities = outputs['opacities']
+                        opacities = outputs["opacities"]
                 else:
                     pred_rgb = outputs.view(-1, sugar.image_height, sugar.image_width, 3)
                 
@@ -678,11 +678,11 @@ def refined_training(args):
                                 if use_sdf_estimation_loss or use_sdf_better_normal_loss:
                                     fields = sugar.get_field_values(
                                         sdf_samples, sdf_gaussian_idx, 
-                                        return_sdf=(use_sdf_estimation_loss or enforce_samples_to_be_on_surface) and (sdf_estimation_mode=='sdf') and iteration > start_sdf_estimation_from, 
+                                        return_sdf=(use_sdf_estimation_loss or enforce_samples_to_be_on_surface) and (sdf_estimation_mode=="sdf") and iteration > start_sdf_estimation_from, 
                                         density_threshold=density_threshold, density_factor=density_factor, 
                                         return_sdf_grad=False, sdf_grad_max_value=10.,
                                         return_closest_gaussian_opacities=use_sdf_better_normal_loss and iteration > start_sdf_better_normal_from,
-                                        return_beta=(use_sdf_estimation_loss or enforce_samples_to_be_on_surface) and (sdf_estimation_mode=='density') and iteration > start_sdf_estimation_from,
+                                        return_beta=(use_sdf_estimation_loss or enforce_samples_to_be_on_surface) and (sdf_estimation_mode=="density") and iteration > start_sdf_estimation_from,
                                         )
                                 
                                 if (use_sdf_estimation_loss or enforce_samples_to_be_on_surface) and iteration > start_sdf_estimation_from:
@@ -703,16 +703,16 @@ def refined_training(args):
                                             sdf_sample_std = sugar.get_cameras_spatial_extent() / 10.
                                     
                                     if use_sdf_estimation_loss:
-                                        if sdf_estimation_mode == 'sdf':
-                                            sdf_values = fields['sdf'][proj_mask]
+                                        if sdf_estimation_mode == "sdf":
+                                            sdf_values = fields["sdf"][proj_mask]
                                             if squared_sdf_estimation_loss:
                                                 sdf_estimation_loss = ((sdf_values - sdf_estimation.abs()) / sdf_sample_std).pow(2)
                                             else:
                                                 sdf_estimation_loss = (sdf_values - sdf_estimation.abs()).abs() / sdf_sample_std
                                             loss = loss + sdf_estimation_factor * sdf_estimation_loss.clamp(max=10.*sugar.get_cameras_spatial_extent()).mean()
-                                        elif sdf_estimation_mode == 'density':
-                                            beta = fields['beta'][proj_mask]
-                                            densities = fields['density'][proj_mask]
+                                        elif sdf_estimation_mode == "density":
+                                            beta = fields["beta"][proj_mask]
+                                            densities = fields["density"][proj_mask]
                                             target_densities = torch.exp(-0.5 * sdf_estimation.pow(2) / beta.pow(2))
                                             if squared_sdf_estimation_loss:
                                                 sdf_estimation_loss = ((densities - target_densities)).pow(2)
@@ -744,7 +744,7 @@ def refined_training(args):
                                         ).detach()
                                     
                                     # Compute weights for normal regularization, based on the gradient of the sdf
-                                    closest_gaussian_opacities = fields['closest_gaussian_opacities'].detach()  # Shape is (n_samples, n_neighbors)
+                                    closest_gaussian_opacities = fields["closest_gaussian_opacities"].detach()  # Shape is (n_samples, n_neighbors)
                                     normal_weights = ((sdf_samples[:, None] - sugar.points[closest_gaussians_idx]) * closest_gaussian_normals).sum(dim=-1).abs()  # Shape is (n_samples, n_neighbors)
                                     if sdf_better_normal_gradient_through_normal_only:
                                         normal_weights = normal_weights.detach()
@@ -803,7 +803,7 @@ def refined_training(args):
             
             # Print loss
             if iteration==1 or iteration % print_loss_every_n_iterations == 0:
-                CONSOLE.print(f'\n-------------------\nIteration: {iteration}')
+                CONSOLE.print(f"\n-------------------\nIteration: {iteration}")
                 train_losses.append(loss.detach().item())
                 CONSOLE.print(f"loss: {loss:>7f}  [{iteration:>5d}/{num_iterations:>5d}]",
                     "computed in", (time.time() - t0) / 60., "minutes.")
@@ -812,12 +812,12 @@ def refined_training(args):
              
                     CONSOLE.print("------Stats-----")
                     CONSOLE.print("---Min, Max, Mean, Std")
-                    CONSOLE.print("Points:", sugar.points.min().item(), sugar.points.max().item(), sugar.points.mean().item(), sugar.points.std().item(), sep='   ')
-                    CONSOLE.print("Scaling factors:", sugar.scaling.min().item(), sugar.scaling.max().item(), sugar.scaling.mean().item(), sugar.scaling.std().item(), sep='   ')
-                    CONSOLE.print("Quaternions:", sugar.quaternions.min().item(), sugar.quaternions.max().item(), sugar.quaternions.mean().item(), sugar.quaternions.std().item(), sep='   ')
-                    CONSOLE.print("Sh coordinates dc:", sugar._sh_coordinates_dc.min().item(), sugar._sh_coordinates_dc.max().item(), sugar._sh_coordinates_dc.mean().item(), sugar._sh_coordinates_dc.std().item(), sep='   ')
-                    CONSOLE.print("Sh coordinates rest:", sugar._sh_coordinates_rest.min().item(), sugar._sh_coordinates_rest.max().item(), sugar._sh_coordinates_rest.mean().item(), sugar._sh_coordinates_rest.std().item(), sep='   ')
-                    CONSOLE.print("Opacities:", sugar.strengths.min().item(), sugar.strengths.max().item(), sugar.strengths.mean().item(), sugar.strengths.std().item(), sep='   ')
+                    CONSOLE.print("Points:", sugar.points.min().item(), sugar.points.max().item(), sugar.points.mean().item(), sugar.points.std().item(), sep="   ")
+                    CONSOLE.print("Scaling factors:", sugar.scaling.min().item(), sugar.scaling.max().item(), sugar.scaling.mean().item(), sugar.scaling.std().item(), sep="   ")
+                    CONSOLE.print("Quaternions:", sugar.quaternions.min().item(), sugar.quaternions.max().item(), sugar.quaternions.mean().item(), sugar.quaternions.std().item(), sep="   ")
+                    CONSOLE.print("Sh coordinates dc:", sugar._sh_coordinates_dc.min().item(), sugar._sh_coordinates_dc.max().item(), sugar._sh_coordinates_dc.mean().item(), sugar._sh_coordinates_dc.std().item(), sep="   ")
+                    CONSOLE.print("Sh coordinates rest:", sugar._sh_coordinates_rest.min().item(), sugar._sh_coordinates_rest.max().item(), sugar._sh_coordinates_rest.mean().item(), sugar._sh_coordinates_rest.std().item(), sep="   ")
+                    CONSOLE.print("Opacities:", sugar.strengths.min().item(), sugar.strengths.max().item(), sugar.strengths.mean().item(), sugar.strengths.std().item(), sep="   ")
                     if regularize_sdf and iteration > start_sdf_regularization_from:
                         CONSOLE.print("Number of gaussians used for sampling in SDF regularization:", n_gaussians_in_sampling)
                 t0 = time.time()
@@ -825,7 +825,7 @@ def refined_training(args):
             # Save model
             if (iteration % save_model_every_n_iterations == 0) or (iteration in save_milestones):
                 CONSOLE.print("Saving model...")
-                model_path = os.path.join(sugar_checkpoint_path, f'{iteration}.pt')
+                model_path = os.path.join(sugar_checkpoint_path, f"{iteration}.pt")
                 sugar.save_model(path=model_path,
                                 train_losses=train_losses,
                                 epoch=epoch,
@@ -833,7 +833,7 @@ def refined_training(args):
                                 optimizer_state_dict=optimizer.state_dict(),
                                 )
                 # if optimize_triangles and iteration >= optimize_triangles_from:
-                #     rm.save_model(os.path.join(rc_checkpoint_path, f'rm_{iteration}.pt'))
+                #     rm.save_model(os.path.join(rc_checkpoint_path, f"rm_{iteration}.pt"))
                 CONSOLE.print("Model saved.")
             
             if iteration >= num_iterations:
@@ -846,9 +846,9 @@ def refined_training(args):
             if do_resolution_warmup and (iteration > 0) and (current_resolution_factor > 1) and (iteration % resolution_warmup_every == 0):
                 current_resolution_factor /= 2.
                 nerfmodel.downscale_output_resolution(1/2)
-                CONSOLE.print(f'\nCamera resolution scaled to '
-                        f'{nerfmodel.training_cameras.ns_cameras.height[0].item()} x '
-                        f'{nerfmodel.training_cameras.ns_cameras.width[0].item()}'
+                CONSOLE.print(f"\nCamera resolution scaled to "
+                        f"{nerfmodel.training_cameras.ns_cameras.height[0].item()} x "
+                        f"{nerfmodel.training_cameras.ns_cameras.width[0].item()}"
                         )
                 sugar.adapt_to_cameras(nerfmodel.training_cameras)
                 # TODO: resize GT images
@@ -857,7 +857,7 @@ def refined_training(args):
 
     CONSOLE.print(f"Training finished after {num_iterations} iterations with loss={loss.detach().item()}.")
     CONSOLE.print("Saving final model...")
-    model_path = os.path.join(sugar_checkpoint_path, f'{iteration}.pt')
+    model_path = os.path.join(sugar_checkpoint_path, f"{iteration}.pt")
     sugar.save_model(path=model_path,
                     train_losses=train_losses,
                     epoch=epoch,
@@ -871,9 +871,9 @@ def refined_training(args):
         # Build path
         CONSOLE.print("\nExporting ply file with refined Gaussians...")
         tmp_list = model_path.split(os.sep)
-        tmp_list[-4] = 'refined_ply'
+        tmp_list[-4] = "refined_ply"
         tmp_list.pop(-1)
-        tmp_list[-1] = tmp_list[-1] + '.ply'
+        tmp_list[-1] = tmp_list[-1] + ".ply"
         refined_ply_save_dir = os.path.join(*tmp_list[:-1])
         refined_ply_save_path = os.path.join(*tmp_list)
         
